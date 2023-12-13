@@ -1,9 +1,11 @@
-const v = "0.1.2";
-require("dotenv").config();
-const express = require("express");
-const mysql = require("mysql");
-const morgan = require("morgan");
-const { getEmployees } = require("./src/employees");
+import dotenv from "dotenv";
+import express from "express";
+import morgan from "morgan";
+import { createPool } from "mysql";
+import { getEmployees } from "./src/employees.js";
+
+// read env variable from .env file
+dotenv.config();
 
 // initialize app as express router
 const app = express();
@@ -11,7 +13,7 @@ const app = express();
 app.use(morgan("combined"));
 
 // create mysql connection pool
-var pool = mysql.createPool({
+var pool = createPool({
 	connectionLimit: process.env.CONNECTION_LIMIT,
 	host: process.env.DB_HOST,
 	user: process.env.DB_USER,
@@ -20,6 +22,7 @@ var pool = mysql.createPool({
 });
 
 // test endpoint
+const v = "0.1.2";
 app.get("/version", (req, res) => {
 	res.json({
 		version: v,
