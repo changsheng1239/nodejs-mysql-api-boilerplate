@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import express from "express";
 import morgan from "morgan";
+import multer from "multer";
+import request from "request";
 import { createPool } from "mysql";
 import { getEmployees } from "./src/employees.js";
 
@@ -9,6 +11,8 @@ dotenv.config();
 
 // initialize app as express router
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
 // use morgan to log requests
 app.use(morgan("combined"));
 
@@ -34,6 +38,31 @@ app.get("/version", (req, res) => {
 // GET /companies/:companyID/employees
 app.get("/companies/:companyID/employees", (req, res) => {
 	getEmployees(pool, req, res);
+});
+
+app.post("/upload", upload.single("file"), function (req, res) {
+	const username = process.env.DRIVE_USERNAME;
+	const password = process.env.DRIVE_PASSWORD;
+	var auth = "Basic " + Buffer.from(username + ":" + password).toString("base64");
+
+	request.put(
+		{
+			url: process.env.DRIVE_WEBDAV_URL + req.file.originalname,
+			headers: {
+				Authorization: auth,
+				"X-Requested-With": "XMLHttpRequest",
+			},
+			body: req.file.buffer,
+		},
+		function (err, response, body) {
+			if (err) {
+				console.error(err);
+				return res.status(500).send(err);
+			}
+			console.log(response.statusCode, body);
+			res.status(200).send(body);
+		}
+	);
 });
 
 // read PORT from environment variable
